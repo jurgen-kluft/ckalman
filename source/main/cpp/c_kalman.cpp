@@ -12,24 +12,45 @@ namespace ncore
                 s32    Inc;
                 float* data;
 
-                s32 Len() const { return N; }
+                inline s32   Len() const { return N; }
+                inline float AtVec(s32 i) const { return data[i * Inc]; }
+                inline void  setVec(s32 i, float value) { data[i * Inc] = value; }
 
                 void MulVec(matrix_t* m, vector_t* v)
                 {
                     // TODO implement matrix-vector multiplication
                     // Note: Incoming vector v can be the same as this!
+                    for (s32 i = 0; i < m->Rows; i++)
+                    {
+                        float f = 0.0f;
+                        for (s32 j = 0; j < m->Cols; j++)
+                        {
+                            f += m->At(i, j) * v->AtVec(j);
+                        }
+                        setVec(i, f);
+                    }
                 }
 
-                void AddVec(vector_t* m, vector_t* v)
+                void AddVec(vector_t* a, vector_t* b)
                 {
                     // TODO implement vector addition
                     // Note: Incoming vector m or v can be the same as this!
+                    const s32 ar = a->Len();
+                    for (s32 i = 0; i < ar; i++)
+                    {
+                        setVec(i, a->AtVec(i) + b->AtVec(i));
+                    }
                 }
 
                 void SubVec(vector_t* m, vector_t* v)
                 {
                     // TODO implement vector subtraction
                     // Note: Incoming vector m or v can be the same as this!
+                    const s32 mr = m->Len();
+                    for (s32 i = 0; i < mr; i++)
+                    {
+                        setVec(i, m->AtVec(i) - v->AtVec(i));
+                    }
                 }
             };
 
@@ -42,7 +63,8 @@ namespace ncore
                 s32    capRows;
                 s32    capCols;
 
-                void Set(s32 row, s32 col, float value) { data[row * stride + col] = value; }
+                inline void  Set(s32 row, s32 col, float value) { data[row * stride + col] = value; }
+                inline float At(s32 row, s32 col) const { return data[row * stride + col]; }
 
                 void Product(matrix_t* T, matrix_t* P, matrix_t* transposedT)
                 {
@@ -52,16 +74,62 @@ namespace ncore
                 void Add(matrix_t* a, matrix_t* b)
                 {
                     // TODO implement matrix addition
+                    // Note: Incoming matrix a or b can be the same as this!
+
+                    for (s32 i = 0; i < a->Rows; i++)
+                    {
+                        for (s32 j = 0; j < a->Cols; j++)
+                        {
+                            Set(i, j, a->At(i, j) + b->At(i, j));
+                        }
+                    }
                 }
 
                 void Sub(matrix_t* a, matrix_t* b)
                 {
                     // TODO implement matrix subtraction
+                    // Note: Incoming matrix a or b can be the same as this!
+
+                    for (s32 i = 0; i < a->Rows; i++)
+                    {
+                        for (s32 j = 0; j < a->Cols; j++)
+                        {
+                            Set(i, j, a->At(i, j) - b->At(i, j));
+                        }
+                    }
                 }
 
                 void Mul(matrix_t* a, matrix_t* b)
                 {
                     // TODO implement matrix multiplication
+                    // Note: Incoming matrix a or b can be the same as this!
+
+                    // TODO allocate a temporary row buffer
+                    float* row = nullptr;
+
+                    const s32 ar = a->Rows;
+                    const s32 ac = a->Cols;
+
+                    for (s32 i = 0; i < ar; i++)
+                    {
+                        // copy row i of a into temporary buffer
+                        for (s32 k = 0; k < ac; k++)
+                        {
+                            row[k] = a->At(i, k);
+                        }
+
+                        for (s32 j = 0; j < b->Cols; j++)
+                        {
+                            float f = 0.0f;
+                            for (s32 k = 0; k < ac; k++)
+                            {
+                                f += row[k] * b->At(k, j);
+                            }
+                            Set(i, j, f);
+                        }
+                    }
+
+                    // TODO free the temporary row buffer
                 }
 
                 void Inverse(matrix_t* m)
@@ -74,8 +142,8 @@ namespace ncore
             {
                 // TODO memory allocation
                 vector_t* v = nullptr;
-                v->N      = n;
-                v->Inc    = 1;
+                v->N        = n;
+                v->Inc      = 1;
                 if (data == nullptr)
                 {
                     // TODO memory allocation
@@ -180,12 +248,26 @@ namespace ncore
 
         }  // namespace nmath
 
-        // NewKalmanFilter returns a new filter_t for the given linear model.
+        // filter_t is responsible for prediction and filtering
+        // of a given linear model. It is assumed that the process being modelled
+        // is a time series, and that the time steps are non-uniform and specified
+        // for each update and prediction operation.
+        struct filter_t
+        {
+            nmodels::model_t* model;
+            s32               dims;
+            u64               t;
+            nmath::vector_t*  state;
+            nmath::matrix_t*  covariance;
+        };
+
+        // NewFilter returns a new filter object for the given linear model.
         filter_t* NewFilter(nmodels::model_t* model)
         {
             nmodels::state_t initial;
             model->InitialState(initial);
 
+            // TODO memory allocation
             filter_t* km = nullptr;
 
             km->model      = model;
@@ -197,14 +279,11 @@ namespace ncore
             return km;
         }
 
-        nmath::vector_t*   state_t(filter_t* kf) { return kf->state; }
+        nmath::vector_t* State(filter_t* kf) { return kf->state; }
         nmath::matrix_t* Covariance(filter_t* kf) { return kf->covariance; }
-
-        void SetCovariance(filter_t* kf, nmath::matrix_t* covariance) { nmath::CopyContent(kf->covariance, covariance); }
-
-        void SetState(filter_t* kf, nmath::vector_t* state) { nmath::CopyContent(kf->state, state); }
-
-        u64 Time(filter_t* kf) { return kf->t; }
+        void             SetCovariance(filter_t* kf, nmath::matrix_t* covariance) { nmath::CopyContent(kf->covariance, covariance); }
+        void             SetState(filter_t* kf, nmath::vector_t* state) { nmath::CopyContent(kf->state, state); }
+        u64              Time(filter_t* kf) { return kf->t; }
 
         bool Predict(filter_t* kf, u64 t)
         {
@@ -242,7 +321,7 @@ namespace ncore
             if (!Predict(kf, t))
                 return false;
 
-            nmath::vector_t*   z = m->Value;
+            nmath::vector_t* z = m->Value;
             nmath::matrix_t* R = m->Covariance;
             nmath::matrix_t* H = m->ObservationModel;
             nmath::matrix_t* P = kf->covariance;

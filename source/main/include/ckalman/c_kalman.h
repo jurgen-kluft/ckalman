@@ -43,18 +43,7 @@ namespace ncore
             };
         }  // namespace nmodels
 
-        // filter_t is responsible for prediction and filtering
-        // of a given linear model. It is assumed that the process being modelled
-        // is a time series, and that the time steps are non-uniform and specified
-        // for each update and prediction operation.
-        struct filter_t
-        {
-            nmodels::model_t* model;
-            s32                dims;
-            u64                t;
-            nmath::vector_t*   state;
-            nmath::matrix_t*   covariance;
-        };
+        struct filter_t;
 
         filter_t* NewFilter(nmodels::model_t* model);
 
@@ -62,7 +51,7 @@ namespace ncore
         // Example models provided with this package often provide functions
         // to extract meaningful information from the state vector, such as
         // .Velocity() for the provided constant velocity model.
-        nmath::vector_t* state_t(filter_t* kf);
+        nmath::vector_t* State(filter_t* kf);
 
         // Covariance returns the current covaraince of the model.
         nmath::matrix_t* Covariance(filter_t* kf);
