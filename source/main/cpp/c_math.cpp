@@ -1,6 +1,8 @@
 #include "ckalman/c_math.h"
 #include "ckalman/c_memory.h"
 
+#include "ccore/c_debug.h"
+
 namespace ncore
 {
     namespace nkalman
@@ -152,6 +154,8 @@ namespace ncore
             void matrix_t::Inverse(memory_t *mem, matrix_t *m)
             {
                 // TODO implement matrix inversion
+                // https://github.com/robbeofficial/LUD/blob/master/LUD.java
+                ASSERTS(false, "Matrix inversion not yet implemented");
             }
 
             void matrix_t::Transpose(memory_t *mem, matrix_t *m)
