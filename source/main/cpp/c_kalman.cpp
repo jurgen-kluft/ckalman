@@ -1,6 +1,7 @@
 #include "ckalman/c_kalman.h"
 #include "ckalman/c_models.h"
 #include "ckalman/c_math.h"
+#include "ckalman/c_memory.h"
 
 #include "ccore/c_debug.h"
 #include "ccore/c_memory.h"
@@ -9,82 +10,6 @@ namespace ncore
 {
     namespace nkalman
     {
-        struct memory_t
-        {
-            void *m_memory_base;
-            u32   m_memory_size;
-            u8   *m_memory_current;
-
-            enum
-            {
-                MEMORY_SCOPE_MAX = 8
-            };
-
-            u8 *m_scopes[MEMORY_SCOPE_MAX];
-            s32 m_scope_index;
-
-            nmath::vector_t *AllocVector(s32 n)
-            {
-                u32 const size = sizeof(nmath::vector_t) + sizeof(float) * n;
-                ASSERT((u32)(m_memory_current + size - (u8 *)m_memory_base) <= m_memory_size);
-                nmath::vector_t *v = (nmath::vector_t *)m_memory_current;
-                m_memory_current += sizeof(nmath::vector_t);
-                v->N    = n;
-                v->Inc  = 1;
-                v->data = (float *)m_memory_current;
-                m_memory_current += sizeof(float) * n;
-                return v;
-            }
-
-            nmath::vector_t *AllocZeroVector(s32 n)
-            {
-                nmath::vector_t *v = AllocVector(n);
-                nmem::memset(v->data, 0, sizeof(float) * n);
-                return v;
-            }
-
-            nmath::matrix_t *AllocMatrix(s32 rows, s32 cols)
-            {
-                u32 const size = sizeof(nmath::matrix_t) + sizeof(float) * rows * cols;
-                ASSERT((u32)(m_memory_current + size - (u8 *)m_memory_base) <= m_memory_size);
-                nmath::matrix_t *m = (nmath::matrix_t *)m_memory_current;
-                m_memory_current += size;
-                m->Rows    = rows;
-                m->Cols    = cols;
-                m->stride  = cols;
-                m->capRows = rows;
-                m->capCols = cols;
-                m->data    = (float *)m_memory_current;
-                return m;
-            }
-
-            nmath::matrix_t *AllocZeroMatrix(s32 rows, s32 cols)
-            {
-                nmath::matrix_t *m = AllocMatrix(rows, cols);
-                nmem::memset(m->data, 0, sizeof(float) * rows * cols);
-                return m;
-            }
-
-            void PushScope()
-            {
-                ASSERT(m_scope_index + 1 < MEMORY_SCOPE_MAX);
-                m_scopes[m_scope_index++] = m_memory_current;
-            }
-
-            void PopScope()
-            {
-                ASSERT(m_scope_index - 1 >= 0);
-                m_memory_current = m_scopes[--m_scope_index];
-#ifdef TARGET_DEBUG
-                // In debug mode, clear memory to catch use-after-free bugs
-                u32 const size = m_scopes[m_scope_index] - m_memory_current;
-                nmem::memset(m_memory_current, 0xCD, (u64)size);
-#endif
-            }
-
-            void Reset() { m_memory_current = (u8 *)m_memory_base; }
-        };
-
         // filter_t is responsible for prediction and filtering
         // of a given linear model. It is assumed that the process being modelled
         // is a time series, and that the time steps are non-uniform and specified
@@ -109,10 +34,10 @@ namespace ncore
             filter_t *km = nullptr;
 
             km->m_model      = model;
-            km->m_dims       = initial.State->Len();
-            km->m_t          = initial.Time;
-            km->m_state      = nmath::Copy(initial.State);
-            km->m_covariance = nmath::Copy(initial.Covariance);
+            km->m_dims       = initial.m_State->Len();
+            km->m_t          = initial.m_Time;
+            km->m_state      = nmath::Copy(initial.m_State);
+            km->m_covariance = nmath::Copy(initial.m_Covariance);
 
             return km;
         }
@@ -159,9 +84,9 @@ namespace ncore
             if (!Predict(kf, t))
                 return false;
 
-            nmath::vector_t *z = m->Value;
-            nmath::matrix_t *R = m->Covariance;
-            nmath::matrix_t *H = m->ObservationModel;
+            nmath::vector_t *z = m->m_Value;
+            nmath::matrix_t *R = m->m_Covariance;
+            nmath::matrix_t *H = m->m_ObservationModel;
             nmath::matrix_t *P = kf->m_covariance;
 
             nmath::vector_t *preFitResidual = nmath::NewVector(z->Len(), nullptr);

@@ -7,7 +7,6 @@ namespace ncore
     {
         namespace nmodels
         {
-
             class ConstantVelocityModel : public model_t
             {
             public:
