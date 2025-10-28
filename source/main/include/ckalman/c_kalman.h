@@ -2,7 +2,7 @@
 #define __C_KALMAN_FILTER_H__
 #include "ccore/c_target.h"
 #ifdef USE_PRAGMA_ONCE
-    #pragma once
+#    pragma once
 #endif
 
 namespace ncore
@@ -21,9 +21,10 @@ namespace ncore
             class model_t;
         }  // namespace nmodels
 
+        struct memory_t;
         struct filter_t;
 
-        filter_t* NewFilter(nmodels::model_t* model);
+        filter_t* NewFilter(nmodels::model_t* model, memory_t* memory);
 
         // state_t returns the current hidden state of the filter_t.
         // Example models provided with this package often provide functions

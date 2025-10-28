@@ -9,6 +9,8 @@ namespace ncore
 {
     namespace nkalman
     {
+        struct memory_t;
+
         namespace nmath
         {
             struct matrix_t;
@@ -23,9 +25,9 @@ namespace ncore
                 inline float AtVec(s32 i) const { return m_data[i * m_Inc]; }
                 inline void  SetVec(s32 i, float value) { m_data[i * m_Inc] = value; }
 
-                void MulVec(matrix_t *m, vector_t *v);
-                void AddVec(vector_t *a, vector_t *b);
-                void SubVec(vector_t *a, vector_t *b);
+                void MulVec(memory_t *mem, matrix_t *m, vector_t *v);
+                void AddVec(memory_t *mem, vector_t *a, vector_t *b);
+                void SubVec(memory_t *mem, vector_t *a, vector_t *b);
             };
 
             struct matrix_t
@@ -40,25 +42,22 @@ namespace ncore
                 inline void  Set(s32 row, s32 col, float value) { m_data[row * m_stride + col] = value; }
                 inline float At(s32 row, s32 col) const { return m_data[row * m_stride + col]; }
 
-                void Product(matrix_t *T, matrix_t *P, matrix_t *transposedT);
-                void Add(matrix_t *a, matrix_t *b);
-                void Sub(matrix_t *a, matrix_t *b);
-                void Mul(matrix_t *a, matrix_t *b);
-                void Mul2(matrix_t *a, matrix_t *b);
-                void Inverse(matrix_t *m);
+                void Product(memory_t *mem, matrix_t *T, matrix_t *P, matrix_t *transposedT);
+                void Add(memory_t *mem, matrix_t *a, matrix_t *b);
+                void Sub(memory_t *mem, matrix_t *a, matrix_t *b);
+                void Mul(memory_t *mem, matrix_t *a, matrix_t *b);
+                void Mul2(memory_t *mem, matrix_t *a, matrix_t *b);
+                void Inverse(memory_t *mem, matrix_t *m);
+                void Transpose(memory_t *mem, matrix_t *m);
             };
 
-            vector_t *NewVector(s32 n, float *data);
-            matrix_t *NewMatrix(s32 rows, s32 cols, float *data);
-            float    *NewBuffer(s32 size);
-            vector_t *Copy(vector_t *v);
-            matrix_t *Copy(matrix_t *m);
+            vector_t *NewVector(memory_t *mem, s32 n, float *data);
+            matrix_t *NewMatrix(memory_t *mem, s32 rows, s32 cols, float *data);
+            float    *NewBuffer(memory_t *mem, s32 size);
+            vector_t *Copy(memory_t *mem, vector_t *v);
+            matrix_t *Copy(memory_t *mem, matrix_t *m);
             void      CopyContent(vector_t *dest, vector_t *src);
             void      CopyContent(matrix_t *dest, matrix_t *src);
-            matrix_t *Transpose(matrix_t *m);
-            void      Free(vector_t *v);
-            void      Free(matrix_t *m);
-            void      FreeBuffer(float *buf);
 
         }  // namespace nmath
     }  // namespace nkalman

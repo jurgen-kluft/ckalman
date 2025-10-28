@@ -9,6 +9,23 @@ namespace ncore
     namespace nkalman
     {
 
+        void *memory_t::AllocMemory(u32 size, u32 alignment)
+        {
+            ptr_t current_address = (ptr_t)m_memory_current;
+            ptr_t aligned_address = (current_address + (alignment - 1)) & ~(alignment - 1);
+            ptr_t new_current     = aligned_address + size;
+            ASSERT((u32)(new_current - (ptr_t)m_memory_base) <= m_memory_size);
+            m_memory_current = (u8 *)new_current;
+            return (void *)aligned_address;
+        }
+
+        void *memory_t::AllocZeroMemory(u32 size, u32 alignment)
+        {
+            void *mem = AllocMemory(size, alignment);
+            nmem::memset(mem, 0, (u64)size);
+            return mem;
+        }
+
         nmath::vector_t *memory_t::AllocVector(s32 n)
         {
             u32 const size = sizeof(nmath::vector_t) + sizeof(float) * n;
@@ -49,6 +66,15 @@ namespace ncore
             nmath::matrix_t *m = AllocMatrix(rows, cols);
             nmem::memset(m->m_data, 0, sizeof(float) * rows * cols);
             return m;
+        }
+
+        f32 *memory_t::AllocFloatArray(u32 n)
+        {
+            u32 const size = sizeof(f32) * n;
+            ASSERT((u32)(m_memory_current + size - (u8 *)m_memory_base) <= m_memory_size);
+            f32 *arr = (f32 *)m_memory_current;
+            m_memory_current += size;
+            return arr;
         }
 
         void memory_t::PushScope()

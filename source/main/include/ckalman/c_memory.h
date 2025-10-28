@@ -28,6 +28,8 @@ namespace ncore
             u8   *m_scopes[MEMORY_SCOPE_MAX];
             s32   m_scope_index;
 
+            void            *AllocMemory(u32 size, u32 alignment);
+            void            *AllocZeroMemory(u32 size, u32 alignment);
             nmath::vector_t *AllocVector(s32 n);
             nmath::vector_t *AllocZeroVector(s32 n);
             nmath::matrix_t *AllocMatrix(s32 rows, s32 cols);
