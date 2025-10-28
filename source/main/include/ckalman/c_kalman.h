@@ -17,30 +17,8 @@ namespace ncore
 
         namespace nmodels
         {
-            struct state_t
-            {
-                u64              Time;
-                nmath::vector_t* state_t;
-                nmath::matrix_t* Covariance;
-            };
-
-            struct measurement_t
-            {
-                nmath::matrix_t* Covariance;
-                nmath::vector_t* Value;
-                nmath::matrix_t* ObservationModel;
-            };
-
-            // model_t is used to initialize hidden states in the model and
-            // provide transition matrices to the filter.
-            // kalman/models provides commonly used models.
-            class model_t
-            {
-            public:
-                virtual void InitialState(state_t& state)                                = 0;
-                virtual void Transition(u64 dt, nmath::matrix_t*& outMatrix)           = 0;
-                virtual void CovarianceTransition(u64 dt, nmath::matrix_t*& outMatrix) = 0;
-            };
+            struct measurement_t;
+            class model_t;
         }  // namespace nmodels
 
         struct filter_t;
