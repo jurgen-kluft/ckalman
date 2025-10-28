@@ -30,7 +30,7 @@ namespace ncore
             nmodels::state_t initial;
             model->InitialState(initial);
 
-            filter_t *kf = (filter_t*)mem->AllocZeroMemory(sizeof(filter_t), alignof(filter_t));
+            filter_t *kf = (filter_t *)mem->AllocZeroMemory(sizeof(filter_t), alignof(filter_t));
 
             kf->m_model      = model;
             kf->m_memory     = mem;
@@ -59,9 +59,8 @@ namespace ncore
             const u64 dt = t - kf->m_t;
             kf->m_t      = t;
 
-            nmath::matrix_t *T, *Q;
-            kf->m_model->Transition(dt, T);
-            kf->m_model->CovarianceTransition(dt, Q);
+            nmath::matrix_t *T = kf->m_model->Transition(kf->m_memory, dt);
+            nmath::matrix_t *Q = kf->m_model->CovarianceTransition(kf->m_memory, dt);
             nmath::matrix_t *P = kf->m_covariance;
 
             kf->m_state->MulVec(kf->m_memory, T, kf->m_state);

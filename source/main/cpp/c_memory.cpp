@@ -8,7 +8,6 @@ namespace ncore
 {
     namespace nkalman
     {
-
         void *memory_t::AllocMemory(u32 size, u32 alignment)
         {
             ptr_t current_address = (ptr_t)m_memory_current;

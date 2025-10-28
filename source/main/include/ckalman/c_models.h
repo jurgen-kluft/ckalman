@@ -6,6 +6,7 @@
 #endif
 
 #include "ckalman/c_math.h"
+#include "ckalman/c_memory.h"
 
 namespace ncore
 {
@@ -27,15 +28,15 @@ namespace ncore
                 nmath::matrix_t *m_ObservationModel;
             };
 
-            // model_t is used to initialize hidden states in the model and
+            // model is used to initialize hidden states in the model and
             // provide transition matrices to the filter.
             // kalman/models provides commonly used models.
             class model_t
             {
             public:
-                virtual void InitialState(state_t &state)                              = 0;
-                virtual void Transition(u64 dt, nmath::matrix_t *&outMatrix)           = 0;
-                virtual void CovarianceTransition(u64 dt, nmath::matrix_t *&outMatrix) = 0;
+                virtual void             InitialState(state_t &state)                = 0;
+                virtual nmath::matrix_t *Transition(memory_t *mem, u64 dt)           = 0;
+                virtual nmath::matrix_t *CovarianceTransition(memory_t *mem, u64 dt) = 0;
             };
 
             struct constantvelocitymodel_config_t
@@ -44,7 +45,15 @@ namespace ncore
                 f64 m_ProcessVariance;
             };
 
-            model_t *NewConstantVelocityModel(u64 model_t, nmath::vector_t *initialPosition, constantvelocitymodel_config_t cfg);
+            class constantvelocitymodel_t : public model_t
+            {
+            public:
+                virtual measurement_t    NewPositionMeasurement(memory_t *mem, nmath::vector_t *position, f64 measurementVariance) = 0;
+                virtual nmath::vector_t *Position(memory_t *mem, nmath::vector_t *state)                                           = 0;
+                virtual nmath::vector_t *Velocity(memory_t *mem, nmath::vector_t *state)                                           = 0;
+            };
+
+            constantvelocitymodel_t *NewConstantVelocityModel(memory_t *mem, u64 model_t, nmath::vector_t *initialPosition, constantvelocitymodel_config_t cfg);
 
         }  // namespace nmodels
     }  // namespace nkalman
