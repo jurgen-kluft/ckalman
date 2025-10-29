@@ -31,6 +31,8 @@ namespace ncore
                 void MulVec(memory_t *mem, matrix_t *m, vector_t *v);
                 void AddVec(memory_t *mem, vector_t *a, vector_t *b);
                 void SubVec(memory_t *mem, vector_t *a, vector_t *b);
+
+                void Copy(vector_t *src);
             };
 
             struct matrix_t
@@ -50,15 +52,15 @@ namespace ncore
                 void Mul2(memory_t *mem, matrix_t *a, matrix_t *b);
                 void Inverse(memory_t *mem, matrix_t *m);
                 void Transpose(memory_t *mem, matrix_t *m);
+
+                void Copy(matrix_t *src);
             };
 
             vector_t *NewVector(memory_t *mem, s32 n, float *data);
             matrix_t *NewMatrix(memory_t *mem, s32 rows, s32 cols, float *data);
             float    *NewBuffer(memory_t *mem, s32 size);
-            vector_t *Copy(memory_t *mem, vector_t *v);
-            matrix_t *Copy(memory_t *mem, matrix_t *m);
-            void      CopyContent(vector_t *dest, vector_t *src);
-            void      CopyContent(matrix_t *dest, matrix_t *src);
+            vector_t *Duplicate(memory_t *mem, vector_t *v);
+            matrix_t *Duplicate(memory_t *mem, matrix_t *m);
 
         }  // namespace nmath
     }  // namespace nkalman

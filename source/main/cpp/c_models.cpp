@@ -116,7 +116,7 @@ namespace ncore
                 {
                     observationModel->Set(i, i, 1.0f);
                 }
-                measurement.m_Value            = nmath::Copy(mem, position);
+                measurement.m_Value            = nmath::Duplicate(mem, position);
                 measurement.m_Covariance       = covariance;
                 measurement.m_ObservationModel = observationModel;
                 return measurement;

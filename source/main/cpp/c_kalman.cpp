@@ -36,16 +36,16 @@ namespace ncore
             kf->m_memory     = mem;
             kf->m_dims       = initial.m_State->Len();
             kf->m_t          = initial.m_Time;
-            kf->m_state      = nmath::Copy(kf->m_memory, initial.m_State);
-            kf->m_covariance = nmath::Copy(kf->m_memory, initial.m_Covariance);
+            kf->m_state      = nmath::Duplicate(kf->m_memory, initial.m_State);
+            kf->m_covariance = nmath::Duplicate(kf->m_memory, initial.m_Covariance);
 
             return kf;
         }
 
         nmath::vector_t *State(filter_t *kf) { return kf->m_state; }
         nmath::matrix_t *Covariance(filter_t *kf) { return kf->m_covariance; }
-        void             SetCovariance(filter_t *kf, nmath::matrix_t *covariance) { nmath::CopyContent(kf->m_covariance, covariance); }
-        void             SetState(filter_t *kf, nmath::vector_t *state) { nmath::CopyContent(kf->m_state, state); }
+        void             SetCovariance(filter_t *kf, nmath::matrix_t *covariance) { kf->m_covariance->Copy(covariance); }
+        void             SetState(filter_t *kf, nmath::vector_t *state) { kf->m_state->Copy(state); }
         u64              Time(filter_t *kf) { return kf->m_t; }
 
         bool Predict(filter_t *kf, u64 t)
@@ -68,7 +68,7 @@ namespace ncore
             kf->m_memory->PushScope();
             {
                 nmath::matrix_t *newCovariance = nmath::NewMatrix(kf->m_memory, kf->m_dims, kf->m_dims, nullptr);
-                nmath::matrix_t *transposedT   = nmath::NewMatrix(kf->m_memory, T->m_Cols, T->m_Rows, nullptr);
+                nmath::matrix_t *transposedT   = nmath::NewMatrix(kf->m_memory, T->m_cols, T->m_rows, nullptr);
                 transposedT->Transpose(kf->m_memory, T);
                 newCovariance->Product(kf->m_memory, T, P, transposedT);
                 kf->m_covariance->Add(kf->m_memory, newCovariance, Q);
@@ -97,7 +97,7 @@ namespace ncore
                 preFitResidual->MulVec(kf->m_memory, H, kf->m_state);
                 preFitResidual->SubVec(kf->m_memory, z, preFitResidual);
 
-                nmath::matrix_t *transposedH = nmath::NewMatrix(kf->m_memory, H->m_Cols, H->m_Rows, nullptr);
+                nmath::matrix_t *transposedH = nmath::NewMatrix(kf->m_memory, H->m_cols, H->m_rows, nullptr);
                 transposedH->Transpose(kf->m_memory, H);
 
                 nmath::matrix_t *gain = nmath::NewMatrix(kf->m_memory, kf->m_dims, z->Len(), nullptr);
@@ -128,10 +128,8 @@ namespace ncore
                 kf->m_memory->PopScope();
                 newCovariance->Mul(kf->m_memory, newCovariance, P);
 
-                // kf->m_covariance = newCovariance;
-                // kf->m_state      = newState;
-                nmath::CopyContent(kf->m_state, newState);
-                nmath::CopyContent(kf->m_covariance, newCovariance);
+                kf->m_state->Copy(newState);
+                kf->m_covariance->Copy(newCovariance);
                 kf->m_t = t;
             }
             kf->m_memory->PopScope();

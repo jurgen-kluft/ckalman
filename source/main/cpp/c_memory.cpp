@@ -51,11 +51,9 @@ namespace ncore
             ASSERT((u32)(m_memory_current + size - (u8 *)m_memory_base) <= m_memory_size);
             nmath::matrix_t *m = (nmath::matrix_t *)m_memory_current;
             m_memory_current += size;
-            m->m_Rows    = rows;
-            m->m_Cols    = cols;
+            m->m_rows    = rows;
+            m->m_cols    = cols;
             m->m_stride  = cols;
-            m->m_capRows = rows;
-            m->m_capCols = cols;
             m->m_data    = (float *)m_memory_current;
             return m;
         }

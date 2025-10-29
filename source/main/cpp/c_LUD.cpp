@@ -1,6 +1,6 @@
-#include "ckalman/c_memory.h"
-#include "ckalman/c_math.h"
 #include "ckalman/c_lud.h"
+#include "ckalman/c_math.h"
+#include "ckalman/c_memory.h"
 
 #include "ccore/c_debug.h"
 #include "ccore/c_memory.h"

@@ -13,6 +13,10 @@ namespace ncore
 
         namespace nmath
         {
+            struct vector_t;
+            struct matrix_t;
+
+            // LU decomposition on 2D arrays, allows to invert a matrix or solve a system of linear equations
             struct lud_t
             {
                 inline lud_t()

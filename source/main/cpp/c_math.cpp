@@ -1,4 +1,5 @@
 #include "ckalman/c_math.h"
+#include "ckalman/c_LUD.h"
 #include "ckalman/c_memory.h"
 
 #include "ccore/c_debug.h"
@@ -57,6 +58,14 @@ namespace ncore
                 mem->PopScope();
             }
 
+            void vector_t::Copy(vector_t *src)
+            {
+                for (s32 i = 0; i < src->m_N; i++)
+                {
+                    m_data[i] = src->m_data[i];
+                }
+            }
+
             void matrix_t::Product(memory_t *mem, matrix_t *T, matrix_t *P, matrix_t *transposedT)
             {
                 mem->PushScope();
@@ -78,7 +87,7 @@ namespace ncore
                         for (s32 j = 0; j < a->m_cols; j++)
                             result->Set(i, j, a->At(i, j) + b->At(i, j));
                     }
-                    CopyContent(this, result);
+                    Copy(result);
                 }
                 mem->PopScope();
             }
@@ -93,7 +102,7 @@ namespace ncore
                         for (s32 j = 0; j < a->m_cols; j++)
                             result->Set(i, j, a->At(i, j) - b->At(i, j));
                     }
-                    CopyContent(this, result);
+                    Copy(result);
                 }
                 mem->PopScope();
             }
@@ -121,7 +130,7 @@ namespace ncore
                             result->Set(i, j, f);
                         }
                     }
-                    CopyContent(this, result);
+                    Copy(result);
                 }
                 mem->PopScope();
             }
@@ -153,9 +162,12 @@ namespace ncore
 
             void matrix_t::Inverse(memory_t *mem, matrix_t *m)
             {
-                // TODO implement matrix inversion
-                // https://github.com/robbeofficial/LUD/blob/master/LUD.java
-                ASSERTS(false, "Matrix inversion not yet implemented");
+                lud_t lud;
+                mem->PushScope();
+                begin(&lud, mem, m);
+                matrix_t *inv = inverse(&lud, mem);
+                Copy(inv);
+                mem->PopScope();
             }
 
             void matrix_t::Transpose(memory_t *mem, matrix_t *m)
@@ -170,27 +182,29 @@ namespace ncore
                             transposed->m_data[j * transposed->m_stride + i] = m->m_data[i * m->m_stride + j];
                         }
                     }
-                    CopyContent(this, transposed);
+                    Copy(transposed);
                 }
                 mem->PopScope();
             }
 
-            vector_t *NewVector(memory_t *mem, s32 n, float *data)
+            void matrix_t::Copy(matrix_t *src)
             {
-                return mem->AllocVector(n);
+                for (s32 i = 0; i < src->m_rows; i++)
+                {
+                    for (s32 j = 0; j < src->m_cols; j++)
+                    {
+                        m_data[i * m_stride + j] = src->m_data[i * src->m_stride + j];
+                    }
+                }
             }
 
-            matrix_t *NewMatrix(memory_t *mem, s32 rows, s32 cols, float *data)
-            {
-                return mem->AllocMatrix(rows, cols);
-            }
+            vector_t *NewVector(memory_t *mem, s32 n, float *data) { return mem->AllocVector(n); }
 
-            float* NewBuffer(memory_t *mem, s32 size)
-            {
-                return mem->AllocFloatArray((u32)size);
-            }
+            matrix_t *NewMatrix(memory_t *mem, s32 rows, s32 cols, float *data) { return mem->AllocMatrix(rows, cols); }
 
-            vector_t *Copy(memory_t *mem, vector_t *v)
+            float *NewBuffer(memory_t *mem, s32 size) { return mem->AllocFloatArray((u32)size); }
+
+            vector_t *Duplicate(memory_t *mem, vector_t *v)
             {
                 vector_t *copy = NewVector(mem, v->m_N, nullptr);
                 for (s32 i = 0; i < v->m_N; i++)
@@ -200,7 +214,7 @@ namespace ncore
                 return copy;
             }
 
-            matrix_t *Copy(memory_t *mem, matrix_t *m)
+            matrix_t *Duplicate(memory_t *mem, matrix_t *m)
             {
                 matrix_t *copy = NewMatrix(mem, m->m_rows, m->m_cols, nullptr);
                 for (s32 i = 0; i < m->m_rows; i++)
@@ -213,24 +227,6 @@ namespace ncore
                 return copy;
             }
 
-            void CopyContent(vector_t *dest, vector_t *src)
-            {
-                for (s32 i = 0; i < src->m_N; i++)
-                {
-                    dest->m_data[i] = src->m_data[i];
-                }
-            }
-
-            void CopyContent(matrix_t *dest, matrix_t *src)
-            {
-                for (s32 i = 0; i < src->m_rows; i++)
-                {
-                    for (s32 j = 0; j < src->m_cols; j++)
-                    {
-                        dest->m_data[i * dest->m_stride + j] = src->m_data[i * src->m_stride + j];
-                    }
-                }
-            }
         }  // namespace nmath
 
     }  // namespace nkalman
