@@ -2,7 +2,7 @@
 #define __C_KALMAN_MATH_H__
 #include "ccore/c_target.h"
 #ifdef USE_PRAGMA_ONCE
-#    pragma once
+    #pragma once
 #endif
 
 namespace ncore
@@ -14,6 +14,9 @@ namespace ncore
         namespace nmath
         {
             struct matrix_t;
+
+            inline float Abs(float f) { return (f < 0.0f) ? -f : f; }
+            inline s32   Min(s32 a, s32 b) { return (a < b) ? a : b; }
 
             struct vector_t
             {
