@@ -20,8 +20,8 @@ namespace ncore
 
             struct vector_t
             {
-                s32    m_N;
-                s32    m_Inc;
+                s8     m_N;
+                s8     m_Inc;
                 float *m_data;
 
                 inline s32   Len() const { return m_N; }
@@ -35,12 +35,10 @@ namespace ncore
 
             struct matrix_t
             {
-                s32    m_Rows;
-                s32    m_Cols;
+                s8     m_rows;
+                s8     m_cols;
+                s8     m_stride;
                 float *m_data;
-                s32    m_stride;
-                s32    m_capRows;
-                s32    m_capCols;
 
                 inline void  Set(s32 row, s32 col, float value) { m_data[row * m_stride + col] = value; }
                 inline float At(s32 row, s32 col) const { return m_data[row * m_stride + col]; }

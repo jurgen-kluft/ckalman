@@ -11,52 +11,32 @@ namespace ncore
     {
         namespace nmath
         {
-            struct lud_t
+            void begin(lud_t* lud, memory_t* mem, matrix_t* M)
             {
-                s32       m_N;
-                s32       m_M;
-                s32       m_PivotSign;
-                s32*      m_Pivots;
-                matrix_t* m_LU;
-                memory_t* m_Memory;
+                lud->m_LU        = M;
+                lud->m_M         = M->m_rows;
+                lud->m_N         = M->m_cols;
+                lud->m_PivotSign = 1;
+                lud->m_Pivots    = (s8*)mem->AllocMemory(sizeof(s8) * lud->m_M, 4);
+                for (s32 i = 0; i < lud->m_M; i++)
+                    lud->m_Pivots[i] = i;
 
-                void Init(matrix_t* M);
-            };
-
-            lud_t* NewLUD(memory_t* mem)
-            {
-                lud_t* lud    = (lud_t*)mem->AllocZeroMemory(sizeof(lud_t), alignof(lud_t));
-                lud->m_Memory = mem;
-                return lud;
-            }
-
-            void lud_t::Init(matrix_t* M)
-            {   
-                m_LU        = M;
-                m_M         = M->m_Rows;
-                m_N         = M->m_Cols;
-                m_PivotSign = 1;
-                m_Pivots    = (s32*)m_Memory->AllocZeroMemory(sizeof(s32) * m_M, alignof(s32));
-                for (s32 i = 0; i < m_M; i++)
-                {
-                    m_Pivots[i] = i;
-                }
-
-                float* LUcolj = m_Memory->AllocFloatArray((u32)m_M);
+                mem->PushScope();
+                float* LUcolj = mem->AllocFloatArray((u32)lud->m_M);
 
                 // Outer loop.
-                for (s32 j = 0; j < m_N; j++)
+                for (s32 j = 0; j < lud->m_N; j++)
                 {
                     // Make a copy of the j-th column to localize references.
-                    for (s32 i = 0; i < m_M; i++)
+                    for (s32 i = 0; i < lud->m_M; i++)
                     {
-                        LUcolj[i] = m_LU->At(i, j);
+                        LUcolj[i] = lud->m_LU->At(i, j);
                     }
 
                     // Apply previous transformations.
-                    for (s32 i = 0; i < m_M; i++)
+                    for (s32 i = 0; i < lud->m_M; i++)
                     {
-                        float* LUrowi = &m_LU->m_data[i * m_LU->m_stride];
+                        float* LUrowi = &lud->m_LU->m_data[i * lud->m_LU->m_stride];
 
                         // Most of the time is spent in the following dot product.
                         s32   kmax = nmath::Min(i, j);
@@ -70,7 +50,7 @@ namespace ncore
 
                     // Find pivot and exchange if necessary.
                     s32 p = j;
-                    for (s32 i = j + 1; i < m_M; i++)
+                    for (s32 i = j + 1; i < lud->m_M; i++)
                     {
                         if (nmath::Abs(LUcolj[i]) > nmath::Abs(LUcolj[p]))
                         {
@@ -78,32 +58,34 @@ namespace ncore
                         }
                     }
 
+                    mem->PopScope();
+
                     if (p != j)
                     {
-                        for (s32 k = 0; k < m_N; k++)
+                        for (s32 k = 0; k < lud->m_N; k++)
                         {
-                            float t = m_LU->At(p, k);
-                            m_LU->Set(p, k, m_LU->At(j, k));
-                            m_LU->Set(j, k, t);
+                            float t = lud->m_LU->At(p, k);
+                            lud->m_LU->Set(p, k, lud->m_LU->At(j, k));
+                            lud->m_LU->Set(j, k, t);
                         }
-                        s32 k       = m_Pivots[p];
-                        m_Pivots[p] = m_Pivots[j];
-                        m_Pivots[j] = k;
-                        m_PivotSign = -m_PivotSign;
+                        s32 k       = lud->m_Pivots[p];
+                        lud->m_Pivots[p] = lud->m_Pivots[j];
+                        lud->m_Pivots[j] = k;
+                        lud->m_PivotSign = -lud->m_PivotSign;
                     }
 
                     // Compute multipliers.
-                    if (j < m_M && m_LU->At(j, j) != 0.0f)
+                    if (j < lud->m_M && lud->m_LU->At(j, j) != 0.0f)
                     {
-                        for (s32 i = j + 1; i < m_M; i++)
+                        for (s32 i = j + 1; i < lud->m_M; i++)
                         {
-                            m_LU->Set(i, j, m_LU->At(i, j) / m_LU->At(j, j));
+                            lud->m_LU->Set(i, j, lud->m_LU->At(i, j) / lud->m_LU->At(j, j));
                         }
                     }
                 }
             }
 
-            bool IsNonsingular(lud_t* lud)
+            bool is_nonsingular(lud_t* lud)
             {
                 for (s32 j = 0; j < lud->m_N; j++)
                 {
@@ -115,17 +97,7 @@ namespace ncore
                 return true;
             }
 
-            void getPivotVector(lud_t* lud, s32*& pivots_out, s32& pivots_len)
-            {
-                pivots_out = (s32*)lud->m_Memory->AllocMemory(sizeof(s32) * lud->m_M, alignof(s32));
-                for (s32 i = 0; i < lud->m_M; i++)
-                {
-                    pivots_out[i] = lud->m_Pivots[i];
-                }
-                pivots_len = lud->m_M;
-            }
-
-            float Determinant(lud_t* lud)
+            float determinant(lud_t* lud)
             {
                 ASSERTS(lud->m_N == lud->m_M, "Matrix must be square to compute determinant");
                 float det = (float)lud->m_PivotSign;
@@ -136,9 +108,9 @@ namespace ncore
                 return det;
             }
 
-            matrix_t* IdentityMatrix(lud_t* lud, s32 size)
+            matrix_t* identity_matrix(lud_t* lud, memory_t* mem, s32 size)
             {
-                matrix_t* I = lud->m_Memory->AllocZeroMatrix(size, size);
+                matrix_t* I = mem->AllocZeroMatrix(size, size);
                 for (s32 i = 0; i < size; i++)
                 {
                     I->Set(i, i, 1.0f);
@@ -146,9 +118,9 @@ namespace ncore
                 return I;
             }
 
-            matrix_t* SubMatrix(lud_t* lud, matrix_t* A, s32* rArray, s32 rLen, s32 j0, s32 j1)
+            matrix_t* sub_matrix(lud_t* lud, memory_t* mem, matrix_t* A, s8* rArray, s32 rLen, s32 j0, s32 j1)
             {
-                matrix_t* B = lud->m_Memory->AllocZeroMatrix(rLen, j1 - j0 + 1);
+                matrix_t* B = mem->AllocZeroMatrix(rLen, j1 - j0 + 1);
                 for (s32 i = 0; i < rLen; i++)
                 {
                     for (s32 j = j0; j <= j1; j++)
@@ -157,9 +129,9 @@ namespace ncore
                 return B;
             }
 
-            matrix_t* GetL(lud_t* lud)
+            matrix_t* getL(lud_t* lud, memory_t* mem)
             {
-                matrix_t* L = lud->m_Memory->AllocMatrix(lud->m_M, lud->m_N);
+                matrix_t* L = mem->AllocMatrix(lud->m_M, lud->m_N);
                 for (s32 i = 0; i < lud->m_M; i++)
                 {
                     for (s32 j = 0; j < lud->m_N; j++)
@@ -181,9 +153,9 @@ namespace ncore
                 return L;
             }
 
-            matrix_t* GetU(lud_t* lud)
+            matrix_t* getU(lud_t* lud, memory_t* mem)
             {
-                matrix_t* U = lud->m_Memory->AllocMatrix(lud->m_M, lud->m_N);
+                matrix_t* U = mem->AllocMatrix(lud->m_M, lud->m_N);
                 for (s32 i = 0; i < lud->m_M; i++)
                 {
                     for (s32 j = 0; j < lud->m_N; j++)
@@ -204,16 +176,16 @@ namespace ncore
             // Solve A*X = B
             // @param  B   A Matrix with as many rows as A and any number of columns.
             // @return     X so that L*U*X = B(piv,:)
-            // @required   Matrix row dimensions must agree.
-            // @required   Matrix is not singular.
-            matrix_t* Solve(lud_t* lud, matrix_t* B)
+            // @required   Matrix row dimensions must agree
+            // @required   Matrix is not singular
+            matrix_t* solve(lud_t* lud, memory_t* mem, matrix_t* B)
             {
-                ASSERTS(B->m_Rows == lud->m_M, "Matrix row dimensions must agree.");
-                ASSERTS(IsNonsingular(lud), "Matrix is singular.");
+                ASSERTS(B->m_rows == lud->m_M, "Matrix row dimensions must agree.");
+                ASSERTS(is_nonsingular(lud), "Matrix is singular.");
 
                 // Copy right hand side with pivoting
-                const s32 nx = B->m_Cols;
-                matrix_t* X  = SubMatrix(lud, B, lud->m_Pivots, lud->m_N, 0, nx - 1);
+                const s32 nx = B->m_cols;
+                matrix_t* X  = sub_matrix(lud, mem, B, lud->m_Pivots, lud->m_N, 0, nx - 1);
 
                 // Solve L*Y = B(piv,:)
                 for (s32 k = 0; k < lud->m_N; k++)
@@ -245,10 +217,10 @@ namespace ncore
                 return X;
             }
 
-            matrix_t* Inverse(lud_t* lud)
+            matrix_t* inverse(lud_t* lud, memory_t* mem)
             {
-                matrix_t* B      = IdentityMatrix(lud, lud->m_M);
-                matrix_t* result = Solve(lud, B);
+                matrix_t* B      = identity_matrix(lud, mem, lud->m_M);
+                matrix_t* result = solve(lud, mem, B);
                 return result;
             }
 
