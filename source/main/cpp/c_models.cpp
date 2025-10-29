@@ -11,6 +11,10 @@ namespace ncore
     {
         namespace nmodels
         {
+            // -----------------------------------------------------------------------------------------------------------------
+            // -----------------------------------------------------------------------------------------------------------------
+            // Constant Velocity Model
+
             class constantvelocitymodel_imp_t : public constantvelocitymodel_t
             {
             public:
@@ -18,7 +22,7 @@ namespace ncore
                 virtual nmath::matrix_t *Transition(memory_t *mem, u64 dt);
                 virtual nmath::matrix_t *CovarianceTransition(memory_t *mem, u64 dt);
 
-                virtual measurement_t    NewPositionMeasurement(memory_t *mem, nmath::vector_t *position, f64 measurementVariance);
+                virtual measurement_t    NewPositionMeasurement(memory_t *mem, nmath::vector_t *position, f32 measurementVariance);
                 virtual nmath::vector_t *Position(memory_t *mem, nmath::vector_t *state);
                 virtual nmath::vector_t *Velocity(memory_t *mem, nmath::vector_t *state);
 
@@ -94,7 +98,7 @@ namespace ncore
                 }
             }
 
-            measurement_t constantvelocitymodel_imp_t::NewPositionMeasurement(memory_t *mem, nmath::vector_t *position, f64 measurementVariance)
+            measurement_t constantvelocitymodel_imp_t::NewPositionMeasurement(memory_t *mem, nmath::vector_t *position, f32 measurementVariance)
             {
                 measurement_t measurement;
                 measurement.m_Value            = nullptr;
@@ -150,6 +154,136 @@ namespace ncore
                     result->SetVec(i, state->AtVec(i + m_dims));
                 }
                 return result;
+            }
+
+            // -----------------------------------------------------------------------------------------------------------------
+            // -----------------------------------------------------------------------------------------------------------------
+            // Simple Model
+
+            class simplemodel_imp_t : public simplemodel_t
+            {
+            public:
+                virtual void             InitialState(state_t &state) { m_model->InitialState(state); }
+                virtual nmath::matrix_t *Transition(memory_t *mem, u64 dt) { return m_model->Transition(mem, dt); }
+                virtual nmath::matrix_t *CovarianceTransition(memory_t *mem, u64 dt) { return m_model->CovarianceTransition(mem, dt); }
+
+                virtual measurement_t NewMeasurement(memory_t *mem, f32 value)
+                {
+                    nmath::vector_t *vvalue = nmath::NewVector(mem, 1, nullptr);
+                    vvalue->SetVec(0, value);
+                    return m_model->NewMeasurement(mem, vvalue);
+                }
+                virtual f32 Value(nmath::vector_t *state) { return state->AtVec(0); }
+
+                DCORE_CLASS_PLACEMENT_NEW_DELETE
+
+                brownianmodel_t *m_model;
+            };
+
+            simplemodel_t *NewSimpleModel(memory_t *mem, u64 initialTime, f32 initialValue, simplemodel_config_t cfg)
+            {
+                // Construct underlying brownian motion model
+            }
+
+            // -----------------------------------------------------------------------------------------------------------------
+            // -----------------------------------------------------------------------------------------------------------------
+            // Brownian Motion Model
+
+            class brownianmodel_imp_t : public brownianmodel_t
+            {
+            public:
+                virtual void             InitialState(state_t &state);
+                virtual nmath::matrix_t *Transition(memory_t *mem, u64 dt);
+                virtual nmath::matrix_t *CovarianceTransition(memory_t *mem, u64 dt);
+
+                virtual measurement_t    NewMeasurement(memory_t *mem, nmath::vector_t *value);
+                virtual nmath::vector_t *Value(nmath::vector_t *state) { return state; }
+
+                DCORE_CLASS_PLACEMENT_NEW_DELETE
+
+                memory_t              *m_memory;
+                state_t               *m_initialState;
+                nmath::matrix_t       *m_transition;
+                nmath::matrix_t       *m_observationModel;
+                nmath::matrix_t       *m_observationCovariance;
+                s32                    m_dims;
+                brownianmodel_config_t m_cfg;
+            };
+
+            brownianmodel_t *NewBrownianModel(memory_t *mem, u64 initialTime, nmath::vector_t *initialVector, brownianmodel_config_t cfg)
+            {
+                const s32 dims = initialVector->Len();
+
+                nmath::matrix_t *transition = mem->AllocZeroMatrix(dims, dims);
+                for (s32 i = 0; i < dims; i++)
+                {
+                    transition->Set(i, i, 1.0f);
+                }
+
+                nmath::matrix_t *initialCovariance = mem->AllocZeroMatrix(dims, dims);
+                for (s32 i = 0; i < dims; i++)
+                {
+                    initialCovariance->Set(i, i, cfg.m_InitialVariance);
+                }
+
+                nmath::matrix_t *observationModel = mem->AllocZeroMatrix(dims, dims);
+                for (s32 i = 0; i < dims; i++)
+                {
+                    observationModel->Set(i, i, 1.0f);
+                }
+
+                nmath::matrix_t *observationCovariance = mem->AllocZeroMatrix(dims, dims);
+                for (s32 i = 0; i < dims; i++)
+                {
+                    observationCovariance->Set(i, i, cfg.m_ObservationVariance);
+                }
+
+                void                *model_mem = mem->AllocMemory(sizeof(brownianmodel_imp_t), alignof(brownianmodel_imp_t));
+                brownianmodel_imp_t *model     = new (model_mem) brownianmodel_imp_t();
+
+                model->m_memory = mem;
+
+                model->m_initialState               = (state_t *)mem->AllocMemory(sizeof(state_t), alignof(state_t));
+                model->m_initialState->m_Time       = initialTime;
+                model->m_initialState->m_State      = initialVector;
+                model->m_initialState->m_Covariance = initialCovariance;
+
+                model->m_transition            = transition;
+                model->m_observationModel      = observationModel;
+                model->m_observationCovariance = observationCovariance;
+
+                model->m_dims = dims;
+                model->m_cfg  = cfg;
+
+                return model;
+            }
+
+            void brownianmodel_imp_t ::InitialState(state_t &state)
+            {
+                state.m_Time       = m_initialState->m_Time;
+                state.m_State      = m_initialState->m_State;
+                state.m_Covariance = m_initialState->m_Covariance;
+            }
+
+            nmath::matrix_t *brownianmodel_imp_t::Transition(memory_t *mem, u64 dt) { return m_transition; }
+            nmath::matrix_t *brownianmodel_imp_t::CovarianceTransition(memory_t *mem, u64 dt)
+            {
+                nmath::matrix_t *outMatrix = mem->AllocZeroMatrix(m_dims, m_dims);
+                const f32        v         = static_cast<f32>(dt) * 0.001f * static_cast<f32>(m_cfg.m_ProcessVariance);
+                for (s32 i = 0; i < m_dims; i++)
+                {
+                    outMatrix->Set(i, i, v);
+                }
+                return outMatrix;
+            }
+
+            measurement_t brownianmodel_imp_t::NewMeasurement(memory_t *mem, nmath::vector_t *value)
+            {
+                measurement_t measurement;
+                measurement.m_Value            = value;
+                measurement.m_Covariance       = m_observationCovariance;
+                measurement.m_ObservationModel = m_observationModel;
+                return measurement;
             }
 
         }  // namespace nmodels

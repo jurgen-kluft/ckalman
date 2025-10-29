@@ -17,7 +17,7 @@ namespace ncore
                     vector_t *result = NewVector(mem, m->m_rows, nullptr);
                     for (s32 i = 0; i < m->m_rows; i++)
                     {
-                        float f = 0.0f;
+                        f32 f = 0.0f;
                         for (s32 j = 0; j < m->m_cols; j++)
                         {
                             f += m->At(i, j) * v->AtVec(j);
@@ -115,7 +115,7 @@ namespace ncore
                     const s32 ac = a->m_cols;
 
                     matrix_t *result = NewMatrix(mem, ar, ac, nullptr);
-                    float    *row    = NewBuffer(mem, ac);
+                    f32      *row    = NewBuffer(mem, ac);
 
                     for (s32 i = 0; i < ar; i++)
                     {
@@ -124,7 +124,7 @@ namespace ncore
 
                         for (s32 j = 0; j < b->m_cols; j++)
                         {
-                            float f = 0.0f;
+                            f32 f = 0.0f;
                             for (s32 k = 0; k < ac; k++)
                                 f += row[k] * b->At(k, j);
                             result->Set(i, j, f);
@@ -142,7 +142,7 @@ namespace ncore
                 {
                     const s32 ar  = a->m_rows;
                     const s32 ac  = a->m_cols;
-                    float    *row = NewBuffer(mem, ac);
+                    f32      *row = NewBuffer(mem, ac);
                     for (s32 i = 0; i < ar; i++)
                     {
                         for (s32 k = 0; k < ac; k++)
@@ -150,7 +150,7 @@ namespace ncore
 
                         for (s32 j = 0; j < b->m_cols; j++)
                         {
-                            float f = 0.0f;
+                            f32 f = 0.0f;
                             for (s32 k = 0; k < ac; k++)
                                 f += row[k] * b->At(k, j);
                             Set(i, j, f);
@@ -198,11 +198,9 @@ namespace ncore
                 }
             }
 
-            vector_t *NewVector(memory_t *mem, s32 n, float *data) { return mem->AllocVector(n); }
-
-            matrix_t *NewMatrix(memory_t *mem, s32 rows, s32 cols, float *data) { return mem->AllocMatrix(rows, cols); }
-
-            float *NewBuffer(memory_t *mem, s32 size) { return mem->AllocFloatArray((u32)size); }
+            vector_t *NewVector(memory_t *mem, s32 n, f32 *data) { return mem->AllocVector(n); }
+            matrix_t *NewMatrix(memory_t *mem, s32 rows, s32 cols, f32 *data) { return mem->AllocMatrix(rows, cols); }
+            f32      *NewBuffer(memory_t *mem, s32 size) { return mem->AllocFloatArray((u32)size); }
 
             vector_t *Duplicate(memory_t *mem, vector_t *v)
             {

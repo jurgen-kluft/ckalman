@@ -2,7 +2,7 @@
 #define __C_KALMAN_MODELS_H__
 #include "ccore/c_target.h"
 #ifdef USE_PRAGMA_ONCE
-#    pragma once
+    #pragma once
 #endif
 
 #include "ckalman/c_math.h"
@@ -39,21 +39,65 @@ namespace ncore
                 virtual nmath::matrix_t *CovarianceTransition(memory_t *mem, u64 dt) = 0;
             };
 
+            // -----------------------------------------------------------------------------------------------------------------
+            // -----------------------------------------------------------------------------------------------------------------
+            // Constant Velocity Model
+
             struct constantvelocitymodel_config_t
             {
-                f64 m_InitialVariance;
-                f64 m_ProcessVariance;
+                f32 m_InitialVariance;
+                f32 m_ProcessVariance;
             };
 
             class constantvelocitymodel_t : public model_t
             {
             public:
-                virtual measurement_t    NewPositionMeasurement(memory_t *mem, nmath::vector_t *position, f64 measurementVariance) = 0;
+                virtual measurement_t    NewPositionMeasurement(memory_t *mem, nmath::vector_t *position, f32 measurementVariance) = 0;
                 virtual nmath::vector_t *Position(memory_t *mem, nmath::vector_t *state)                                           = 0;
                 virtual nmath::vector_t *Velocity(memory_t *mem, nmath::vector_t *state)                                           = 0;
             };
 
-            constantvelocitymodel_t *NewConstantVelocityModel(memory_t *mem, u64 model_t, nmath::vector_t *initialPosition, constantvelocitymodel_config_t cfg);
+            constantvelocitymodel_t *NewConstantVelocityModel(memory_t *mem, u64 initialTime, nmath::vector_t *initialPosition, constantvelocitymodel_config_t cfg);
+
+            // -----------------------------------------------------------------------------------------------------------------
+            // -----------------------------------------------------------------------------------------------------------------
+            // Simple Model
+
+            struct simplemodel_config_t
+            {
+                f32 m_InitialVariance;
+                f32 m_ProcessVariance;
+                f32 m_ObservationVariance;
+            };
+
+            class simplemodel_t : public model_t
+            {
+            public:
+                virtual measurement_t NewMeasurement(memory_t *mem, f32 value) = 0;
+                virtual f32           Value(nmath::vector_t *state)            = 0;
+            };
+
+            simplemodel_t *NewSimpleModel(memory_t *mem, u64 initialTime, f32 initialValue, simplemodel_config_t cfg);
+
+            // -----------------------------------------------------------------------------------------------------------------
+            // -----------------------------------------------------------------------------------------------------------------
+            // Brownian Motion Model
+
+            struct brownianmodel_config_t
+            {
+                f32 m_InitialVariance;
+                f32 m_ProcessVariance;
+                f32 m_ObservationVariance;
+            };
+
+            class brownianmodel_t : public model_t
+            {
+            public:
+                virtual measurement_t    NewMeasurement(memory_t *mem, nmath::vector_t *value) = 0;
+                virtual nmath::vector_t *Value(nmath::vector_t *state)                         = 0;
+            };
+
+            brownianmodel_t *NewBrownianModel(memory_t *mem, u64 initialTime, nmath::vector_t *initialVector, brownianmodel_config_t cfg);
 
         }  // namespace nmodels
     }  // namespace nkalman
