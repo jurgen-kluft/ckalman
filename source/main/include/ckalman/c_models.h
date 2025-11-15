@@ -85,6 +85,13 @@ namespace ncore
 
             struct brownianmodel_config_t
             {
+                brownianmodel_config_t() = default;
+                brownianmodel_config_t(f32 initVar, f32 procVar, f32 obsVar)
+                    : m_InitialVariance(initVar)
+                    , m_ProcessVariance(procVar)
+                    , m_ObservationVariance(obsVar)
+                {
+                }
                 f32 m_InitialVariance;
                 f32 m_ProcessVariance;
                 f32 m_ObservationVariance;

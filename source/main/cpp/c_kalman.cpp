@@ -50,7 +50,7 @@ namespace ncore
 
         bool Predict(filter_t *kf, u64 t)
         {
-            if (t <= kf->m_t)
+            if (t < kf->m_t)
                 return false;  // can't predict past
 
             if (t == kf->m_t)
@@ -67,8 +67,8 @@ namespace ncore
 
             kf->m_memory->PushScope();
             {
-                nmath::matrix_t *newCovariance = nmath::NewMatrix(kf->m_memory, kf->m_dims, kf->m_dims, nullptr);
-                nmath::matrix_t *transposedT   = nmath::NewMatrix(kf->m_memory, T->m_cols, T->m_rows, nullptr);
+                nmath::matrix_t *newCovariance = nmath::NewMatrix(kf->m_memory, kf->m_dims, kf->m_dims);
+                nmath::matrix_t *transposedT   = nmath::NewMatrix(kf->m_memory, T->m_cols, T->m_rows);
                 transposedT->Transpose(kf->m_memory, T);
                 newCovariance->Product(kf->m_memory, T, P, transposedT);
                 kf->m_covariance->Add(kf->m_memory, newCovariance, Q);
@@ -80,9 +80,6 @@ namespace ncore
 
         bool Update(filter_t *kf, u64 t, nmodels::measurement_t *m)
         {
-            if (t <= kf->m_t)
-                return false;  // can't predict past
-
             if (!Predict(kf, t))
                 return false;
 
@@ -93,32 +90,32 @@ namespace ncore
 
             kf->m_memory->PushScope();
             {
-                nmath::vector_t *preFitResidual = nmath::NewVector(kf->m_memory, z->Len(), nullptr);
+                nmath::vector_t *preFitResidual = nmath::NewVector(kf->m_memory, z->Len());
                 preFitResidual->MulVec(kf->m_memory, H, kf->m_state);
                 preFitResidual->SubVec(kf->m_memory, z, preFitResidual);
 
-                nmath::matrix_t *transposedH = nmath::NewMatrix(kf->m_memory, H->m_cols, H->m_rows, nullptr);
+                nmath::matrix_t *transposedH = nmath::NewMatrix(kf->m_memory, H->m_cols, H->m_rows);
                 transposedH->Transpose(kf->m_memory, H);
 
-                nmath::matrix_t *gain = nmath::NewMatrix(kf->m_memory, kf->m_dims, z->Len(), nullptr);
+                nmath::matrix_t *gain = nmath::NewMatrix(kf->m_memory, kf->m_dims, z->Len());
                 kf->m_memory->PushScope();
                 {
-                    nmath::matrix_t *preFitResidualCov = nmath::NewMatrix(kf->m_memory, z->Len(), z->Len(), nullptr);
+                    nmath::matrix_t *preFitResidualCov = nmath::NewMatrix(kf->m_memory, z->Len(), z->Len());
                     preFitResidualCov->Product(kf->m_memory, H, P, transposedH);
                     preFitResidualCov->Add(kf->m_memory, preFitResidualCov, R);
 
-                    nmath::matrix_t *preFitResidualCovInv = nmath::NewMatrix(kf->m_memory, z->Len(), z->Len(), nullptr);
+                    nmath::matrix_t *preFitResidualCovInv = nmath::NewMatrix(kf->m_memory, z->Len(), z->Len());
                     preFitResidualCovInv->Inverse(kf->m_memory, preFitResidualCov);
 
                     gain->Product(kf->m_memory, P, transposedH, preFitResidualCovInv);
                 }
                 kf->m_memory->PopScope();
 
-                nmath::vector_t *newState = nmath::NewVector(kf->m_memory, kf->m_dims, nullptr);
+                nmath::vector_t *newState = nmath::NewVector(kf->m_memory, kf->m_dims);
                 newState->MulVec(kf->m_memory, gain, preFitResidual);
                 newState->AddVec(kf->m_memory, kf->m_state, newState);
 
-                nmath::matrix_t *newCovariance = nmath::NewMatrix(kf->m_memory, kf->m_dims, kf->m_dims, nullptr);
+                nmath::matrix_t *newCovariance = nmath::NewMatrix(kf->m_memory, kf->m_dims, kf->m_dims);
                 newCovariance->Mul(kf->m_memory, gain, H);
                 kf->m_memory->PushScope();
                 {
@@ -139,7 +136,7 @@ namespace ncore
 
         nmath::matrix_t *Eye(memory_t *mem, filter_t *kf, s32 n)
         {
-            nmath::matrix_t *result = nmath::NewMatrix(mem, n, n, nullptr);
+            nmath::matrix_t *result = nmath::NewMatrix(mem, n, n);
             for (s32 i = 0; i < n; i++)
                 result->Set(i, i, 1.0);
             return result;

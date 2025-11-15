@@ -22,7 +22,7 @@ namespace ncore
             {
                 s8   m_N;
                 s8   m_Inc;
-                f32 *m_data;
+                f32 *m_data; // TODO pointer can be removed, since the data follows the struct in memory
 
                 inline s32  Len() const { return m_N; }
                 inline f32  AtVec(s32 i) const { return m_data[i * m_Inc]; }
@@ -40,7 +40,7 @@ namespace ncore
                 s8   m_rows;
                 s8   m_cols;
                 s8   m_stride;
-                f32 *m_data;
+                f32 *m_data; // TODO pointer can be removed, since the data follows the struct in memory
 
                 inline void Set(s32 row, s32 col, f32 value) { m_data[row * m_stride + col] = value; }
                 inline f32  At(s32 row, s32 col) const { return m_data[row * m_stride + col]; }
@@ -56,8 +56,8 @@ namespace ncore
                 void Copy(matrix_t *src);
             };
 
-            vector_t *NewVector(memory_t *mem, s32 n, f32 *data);
-            matrix_t *NewMatrix(memory_t *mem, s32 rows, s32 cols, f32 *data);
+            vector_t *NewVector(memory_t *mem, s32 n);
+            matrix_t *NewMatrix(memory_t *mem, s32 rows, s32 cols);
             f32      *NewBuffer(memory_t *mem, s32 size);
             vector_t *Duplicate(memory_t *mem, vector_t *v);
             matrix_t *Duplicate(memory_t *mem, matrix_t *m);

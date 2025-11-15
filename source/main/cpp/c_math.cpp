@@ -14,7 +14,7 @@ namespace ncore
             {
                 mem->PushScope();
                 {
-                    vector_t *result = NewVector(mem, m->m_rows, nullptr);
+                    vector_t *result = NewVector(mem, m->m_rows);
                     for (s32 i = 0; i < m->m_rows; i++)
                     {
                         f32 f = 0.0f;
@@ -35,7 +35,7 @@ namespace ncore
                 mem->PushScope();
                 {
                     const s32 ar     = a->Len();
-                    vector_t *result = NewVector(mem, ar, nullptr);
+                    vector_t *result = NewVector(mem, ar);
                     for (s32 i = 0; i < ar; i++)
                         result->SetVec(i, a->AtVec(i) + b->AtVec(i));
                     for (s32 i = 0; i < ar; i++)
@@ -49,7 +49,7 @@ namespace ncore
                 mem->PushScope();
                 {
                     const s32 ar     = a->Len();
-                    vector_t *result = NewVector(mem, ar, nullptr);
+                    vector_t *result = NewVector(mem, ar);
                     for (s32 i = 0; i < ar; i++)
                         result->SetVec(i, a->AtVec(i) - b->AtVec(i));
                     for (s32 i = 0; i < ar; i++)
@@ -70,7 +70,7 @@ namespace ncore
             {
                 mem->PushScope();
                 {
-                    matrix_t *result = NewMatrix(mem, T->m_rows, P->m_cols, nullptr);
+                    matrix_t *result = NewMatrix(mem, T->m_rows, P->m_cols);
                     result->Mul2(mem, T, P);
                     Mul2(mem, result, transposedT);
                 }
@@ -81,7 +81,7 @@ namespace ncore
             {
                 mem->PushScope();
                 {
-                    matrix_t *result = NewMatrix(mem, a->m_rows, a->m_cols, nullptr);
+                    matrix_t *result = NewMatrix(mem, a->m_rows, a->m_cols);
                     for (s32 i = 0; i < a->m_rows; i++)
                     {
                         for (s32 j = 0; j < a->m_cols; j++)
@@ -96,7 +96,7 @@ namespace ncore
             {
                 mem->PushScope();
                 {
-                    matrix_t *result = NewMatrix(mem, a->m_rows, a->m_cols, nullptr);
+                    matrix_t *result = NewMatrix(mem, a->m_rows, a->m_cols);
                     for (s32 i = 0; i < a->m_rows; i++)
                     {
                         for (s32 j = 0; j < a->m_cols; j++)
@@ -114,7 +114,7 @@ namespace ncore
                     const s32 ar = a->m_rows;
                     const s32 ac = a->m_cols;
 
-                    matrix_t *result = NewMatrix(mem, ar, ac, nullptr);
+                    matrix_t *result = NewMatrix(mem, ar, ac);
                     f32      *row    = NewBuffer(mem, ac);
 
                     for (s32 i = 0; i < ar; i++)
@@ -174,7 +174,7 @@ namespace ncore
             {
                 mem->PushScope();
                 {
-                    matrix_t *transposed = NewMatrix(mem, m->m_cols, m->m_rows, nullptr);
+                    matrix_t *transposed = NewMatrix(mem, m->m_cols, m->m_rows);
                     for (s32 i = 0; i < m->m_rows; i++)
                     {
                         for (s32 j = 0; j < m->m_cols; j++)
@@ -198,13 +198,13 @@ namespace ncore
                 }
             }
 
-            vector_t *NewVector(memory_t *mem, s32 n, f32 *data) { return mem->AllocVector(n); }
-            matrix_t *NewMatrix(memory_t *mem, s32 rows, s32 cols, f32 *data) { return mem->AllocMatrix(rows, cols); }
+            vector_t *NewVector(memory_t *mem, s32 n) { return mem->AllocVector(n); }
+            matrix_t *NewMatrix(memory_t *mem, s32 rows, s32 cols) { return mem->AllocMatrix(rows, cols); }
             f32      *NewBuffer(memory_t *mem, s32 size) { return mem->AllocFloatArray((u32)size); }
 
             vector_t *Duplicate(memory_t *mem, vector_t *v)
             {
-                vector_t *copy = NewVector(mem, v->m_N, nullptr);
+                vector_t *copy = NewVector(mem, v->m_N);
                 for (s32 i = 0; i < v->m_N; i++)
                 {
                     copy->m_data[i] = v->m_data[i];
@@ -214,7 +214,7 @@ namespace ncore
 
             matrix_t *Duplicate(memory_t *mem, matrix_t *m)
             {
-                matrix_t *copy = NewMatrix(mem, m->m_rows, m->m_cols, nullptr);
+                matrix_t *copy = NewMatrix(mem, m->m_rows, m->m_cols);
                 for (s32 i = 0; i < m->m_rows; i++)
                 {
                     for (s32 j = 0; j < m->m_cols; j++)

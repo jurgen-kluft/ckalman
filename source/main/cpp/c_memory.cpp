@@ -11,7 +11,7 @@ namespace ncore
         void *memory_t::AllocMemory(u32 size, u32 alignment)
         {
             ptr_t current_address = (ptr_t)m_memory_current;
-            ptr_t aligned_address = (current_address + (alignment - 1)) & ~(alignment - 1);
+            ptr_t aligned_address = (current_address + ((ptr_t)alignment - 1)) & ~((ptr_t)alignment - 1);
             ptr_t new_current     = aligned_address + size;
             ASSERT((u32)(new_current - (ptr_t)m_memory_base) <= m_memory_size);
             m_memory_current = (u8 *)new_current;
@@ -47,14 +47,15 @@ namespace ncore
 
         nmath::matrix_t *memory_t::AllocMatrix(s32 rows, s32 cols)
         {
-            u32 const size = sizeof(nmath::matrix_t) + sizeof(float) * rows * cols;
-            ASSERT((u32)(m_memory_current + size - (u8 *)m_memory_base) <= m_memory_size);
+            u32 const size = sizeof(nmath::matrix_t);
+            u32 const dataSize = sizeof(float) * rows * cols;
+            ASSERT((u32)(m_memory_current + (size+dataSize) - (u8 *)m_memory_base) <= m_memory_size);
             nmath::matrix_t *m = (nmath::matrix_t *)m_memory_current;
-            m_memory_current += size;
             m->m_rows    = rows;
             m->m_cols    = cols;
             m->m_stride  = cols;
-            m->m_data    = (float *)m_memory_current;
+            m->m_data    = (float *)(m_memory_current + size);
+            m_memory_current += (size + dataSize);
             return m;
         }
 

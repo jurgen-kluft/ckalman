@@ -22,6 +22,14 @@ namespace ncore
                 MEMORY_SCOPE_MAX = 8
             };
 
+            memory_t(void* memory_base, u32 memory_size)
+                : m_memory_base(memory_base)
+                , m_memory_size(memory_size)
+                , m_memory_current((u8*)memory_base)
+                , m_scope_index(0)
+            {
+            }
+
             void *m_memory_base;
             u32   m_memory_size;
             u8   *m_memory_current;

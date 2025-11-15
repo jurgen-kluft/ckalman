@@ -55,7 +55,7 @@ namespace ncore
         // The time field must be no earlier than the current time of the filter.
         bool Update(filter_t* kf, u64 t, nmodels::measurement_t* m);
 
-        nmath::matrix_t* Eye(filter_t* kf, s32 n);
+        nmath::matrix_t* Eye(memory_t *mem, filter_t* kf, s32 n);
 
     }  // namespace nkalman
 }  // namespace ncore
