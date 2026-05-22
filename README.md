@@ -4,9 +4,9 @@ The Kalman filter here is implemented in C style C++ for easy integration into C
 
 Features:
 
-- A simple 1D Kalman
-- A more general ND Kalman (C++ template)
 - Self contained
 - No dynamic memory allocation
+- [x] 1D Kalman filter implementation
+- [x] ND Kalman filter implementation using C++ templates
 
 
