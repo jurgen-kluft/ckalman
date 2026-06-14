@@ -187,14 +187,14 @@ namespace ncore
         static inline void begin(kalman_nd_t<N, M>& kf, const f32 initial_states[N], f32 initial_uncertainty = 1.0f)
         {
             // 1. Set the initial tracking states
-            for (int i = 0; i < N; ++i)
+            for (i32 i = 0; i < N; ++i)
             {
                 kf.x.data[i][0] = initial_states[i];
             }
 
             // 2. Reset the error covariance matrix to an identity layout scaled by uncertainty
             kf.P.setIdentity();
-            for (int i = 0; i < N; ++i)
+            for (i32 i = 0; i < N; ++i)
             {
                 kf.P.data[i][i] = initial_uncertainty;
             }
@@ -205,7 +205,7 @@ namespace ncore
         {
             // Wrap raw array into our reusable matrix_t object for computations
             matrix_t<M, 1> z;
-            for (int i = 0; i < M; ++i)
+            for (i32 i = 0; i < M; ++i)
                 z.data[i][0] = measurement[i];
 
             // --- 1. PREDICT PHASE ---
